@@ -11,6 +11,7 @@ import android.telecom.Connection.STATE_INITIALIZING
 import android.telecom.Connection.STATE_NEW
 import android.telecom.Connection.STATE_PULLING_CALL
 import android.telecom.Connection.STATE_RINGING
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import com.example.androidcallingsampleapp.service.ConnectionStateChangedListener
@@ -65,7 +66,6 @@ class CallingViewModel(
           }
             return
         }
-
     }
 
     fun startIncomingCall(
