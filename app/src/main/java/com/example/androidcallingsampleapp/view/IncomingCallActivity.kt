@@ -8,20 +8,33 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import coil.compose.rememberAsyncImagePainter
 import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.viewModel.CallingViewModel
 
@@ -56,56 +69,58 @@ fun IncomingCallScreen(
     viewModel: CallingViewModel,
     onFinish: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
     ) {
-        Row {
-            Button(onClick = {
-                viewModel.activateCall()
-                // TODO: 通話画面に遷移させる
-            }) {
-                Text(text = "応答")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                viewModel.rejectCall()
-                onFinish()
-            }) {
-                Text(text = "拒否")
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Image(
+                painter = rememberAsyncImagePainter("https://source.unsplash.com/random"),
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(150.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            Text(
+                text = "hogehoge",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+            ) {
+                Button(
+                    onClick = {
+                        viewModel.activateCall()
+                        // TODO: 通話画面に遷移させる
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(text = "応答")
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.rejectCall()
+                        onFinish()
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(text = "拒否")
+                }
             }
         }
     }
 }
-
-@Composable
-fun CallingScreen(
-    context: Context,
-    viewModel: CallingViewModel
-) {
-
-    Column {
-        Button(onClick = {
-            viewModel.activateCall()
-        }) {
-            Text("Activate Call")
-        }
-
-        Button(onClick = {
-            viewModel.holdCall()
-        }) {
-            Text("Hold Call")
-        }
-
-        Button(onClick = {
-            viewModel.disconnectCall()
-        }) {
-            Text("Disconnect Call")
-        }
-    }
-}
-
 
 class ViewModelFactory(private val telecomUseCase: TelecomUseCase) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
