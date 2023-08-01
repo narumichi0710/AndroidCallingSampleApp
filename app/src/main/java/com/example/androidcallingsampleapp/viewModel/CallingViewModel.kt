@@ -12,89 +12,69 @@ import android.telecom.Connection.STATE_NEW
 import android.telecom.Connection.STATE_PULLING_CALL
 import android.telecom.Connection.STATE_RINGING
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import com.example.androidcallingsampleapp.service.ConnectionStateChangedListener
-import com.example.androidcallingsampleapp.service.DemoConnection
-import com.example.androidcallingsampleapp.service.TelecomHelper
+import com.example.androidcallingsampleapp.service.TelecomConnection
+import com.example.androidcallingsampleapp.service.TelecomUseCase
+import com.example.androidcallingsampleapp.view.tag
 
 
 class CallingViewModel(
-    private val telecomHelper: TelecomHelper
+    private val telecomUseCase: TelecomUseCase
 ): ViewModel() {
 
     private val listener = object : ConnectionStateChangedListener {
-        override fun onStateChanged(
-            state: Int,
-            connection: DemoConnection
-        ) {
+        override fun onStateChanged(state: Int, connection: TelecomConnection) {
             when (state) {
-                STATE_INITIALIZING -> {}
-                STATE_NEW -> {}
-                STATE_RINGING -> {}
-                STATE_DIALING -> {}
-                STATE_ACTIVE -> {}
-                STATE_HOLDING -> {}
-                STATE_DISCONNECTED -> {}
-                STATE_PULLING_CALL -> {}
+                STATE_INITIALIZING -> {
+                    Log.d(tag, "onStateChanged INITIALIZING")
+                }
+                STATE_NEW -> {
+                    Log.d(tag, "onStateChanged NEW")
+                }
+                STATE_RINGING -> {
+                    Log.d(tag, "onStateChanged RINGING")
+                }
+                STATE_DIALING -> {
+                    Log.d(tag, "onStateChanged DIALING")
+                }
+                STATE_ACTIVE -> {
+                    Log.d(tag, "onStateChanged ACTIVE")
+                }
+                STATE_HOLDING -> {
+                    Log.d(tag, "onStateChanged HOLDING")
+                }
+                STATE_DISCONNECTED -> {
+                    Log.d(tag, "onStateChanged DISCONNECTED")
+                }
+                STATE_PULLING_CALL -> {
+                    Log.d(tag, "onStateChanged PULLING_CALL")
+                }
             }
         }
     }
 
     init {
-        telecomHelper.addConnectionStateChangedListener(listener)
-    }
-
-    fun startOutgoingCall(
-        context: Context,
-        number: String,
-        name: String
-    ) {
-      if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-
-          val accountHandle = telecomHelper.initPhoneAccount()
-          telecomHelper.initPhoneAccount()
-          accountHandle?.let {
-              telecomHelper.startOutgoing(number, name, it.accountHandle)
-          }
-            return
-        }
-    }
-
-    fun startIncomingCall(
-        context: Context,
-        name: String
-    ) {
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            val accountHandle = telecomHelper.initPhoneAccount()
-            accountHandle?.let {
-                telecomHelper.startIncoming(name, it.accountHandle)
-            }
-        }
+        telecomUseCase.addConnectionStateChangedListener(listener)
     }
 
     fun activateCall() {
-        telecomHelper.activate()
+        telecomUseCase.activate()
+    }
+
+    fun rejectCall() {
+        telecomUseCase.reject()
     }
 
     fun holdCall() {
-        telecomHelper.hold()
+        telecomUseCase.hold()
     }
 
     fun disconnectCall() {
-        telecomHelper.disconnect()
+        telecomUseCase.disconnect()
     }
 
     override fun onCleared() {
-        // メモリリークしないように
-        telecomHelper.removeConnectionStateChangedListener(listener)
-        super.onCleared()
+        telecomUseCase.removeConnectionStateChangedListener(listener)
     }
 }

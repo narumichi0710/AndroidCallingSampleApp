@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AndroidCallingSampleApp</string>
+    <string name="calling_name">CallingView</string>
 </resources>
