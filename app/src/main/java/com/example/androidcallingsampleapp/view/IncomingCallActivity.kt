@@ -1,9 +1,9 @@
 package com.example.androidcallingsampleapp.view
 
+
 import android.app.KeyguardManager
 import android.content.Context
 import android.os.Bundle
-import android.telecom.TelecomManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,14 +35,23 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import coil.compose.rememberAsyncImagePainter
+import com.example.androidcallingsampleapp.CallingApplication
 import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.viewModel.CallingViewModel
 
 
+/*
+* 1. Push通知受け取った際に、useCaseを通じてtelecomManagerに対してaddNewIncomingCall()を実行し、新しい着信をTelecomサブシステムに通知する
+* 2. TelecomサブシステムはTelecomConnectionServiceの実装にバインドしonCreateIncomingConnection() メソッドを使用して、新しい着信をConnectionクラスにリクエストする
+* 3. TelecomサブシステムがonShowIncomingCallUi()メソッドを使用して、アプリに対し、通話応答画面を表示する必要があることを通知する
+* 4. アプリが関連する全画面インテントを持つ通知を使用して着信 UI を表示します。詳しくは onShowIncomingCallUi() をご覧ください
+* 5. ユーザーが着信に応答した場合は setActive() メソッドを呼び出し、着信を拒否した場合はsetDisconnected()を呼び出した後、destroy()を呼び出す
+*/
+
 class IncomingCallActivity : ComponentActivity() {
 
     private val viewModel: CallingViewModel by viewModels {
-        ViewModelFactory(TelecomUseCase(this, getSystemService(TELECOM_SERVICE) as TelecomManager))
+        ViewModelFactory(CallingApplication.instance!!.useCase)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
