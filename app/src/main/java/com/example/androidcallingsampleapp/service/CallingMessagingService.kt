@@ -1,12 +1,14 @@
 package com.example.androidcallingsampleapp.service
 
+import android.Manifest
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
-import android.telecom.TelecomManager
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.example.androidcallingsampleapp.CallingApplication
 import com.example.androidcallingsampleapp.view.MainActivity
 import com.example.androidcallingsampleapp.R
 import com.example.androidcallingsampleapp.view.tag
@@ -35,23 +37,24 @@ class CallingMessagingService : FirebaseMessagingService() {
         startIncoming(remoteMessage)
     }
 
-    override fun onDeletedMessages() {
-        Log.d(tag, "onDeletedMessages")
-        super.onDeletedMessages()
-    }
-
     private fun startIncoming(remoteMessage: RemoteMessage) {
+        Log.d(tag, "startIncoming")
         val callerId = remoteMessage.data["caller_id"]
         val callerName = remoteMessage.data["caller_name"]
         val callerIdType = remoteMessage.data["caller_id_type"]
         val hasVideo = remoteMessage.data["has_video"]
-        val telecomUseCase = TelecomUseCase(this, getSystemService(Context.TELECOM_SERVICE) as TelecomManager)
-        val phoneAccount = telecomUseCase.initPhoneAccount(callerId,callerName, callerIdType, hasVideo)
-        telecomUseCase.startIncoming(phoneAccount)
-        Log.d(tag, "$phoneAccount")
+        val application = CallingApplication.instance!!
+        application.useCase.startIncoming(application.account)
     }
 
+    override fun onDeletedMessages() {
+        Log.d(tag, "onDeletedMessages")
+        super.onDeletedMessages()
+    }
     private fun sendMessage(remoteMessage: RemoteMessage) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
         remoteMessage.notification?.let {
             val intent = Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)

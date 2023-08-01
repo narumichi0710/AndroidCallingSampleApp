@@ -1,8 +1,6 @@
 package com.example.androidcallingsampleapp.viewModel
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
+
 import android.telecom.Connection.STATE_ACTIVE
 import android.telecom.Connection.STATE_DIALING
 import android.telecom.Connection.STATE_DISCONNECTED
@@ -24,31 +22,34 @@ class CallingViewModel(
 ): ViewModel() {
 
     private val listener = object : ConnectionStateChangedListener {
-        override fun onStateChanged(state: Int, connection: TelecomConnection) {
-            when (state) {
+        override fun onStateChanged(
+            state: Int,
+            connection: TelecomConnection
+        ) {
+            when(state) {
                 STATE_INITIALIZING -> {
-                    Log.d(tag, "onStateChanged INITIALIZING")
+                    Log.d(tag, "STATE_INITIALIZING")
                 }
                 STATE_NEW -> {
-                    Log.d(tag, "onStateChanged NEW")
+                    Log.d(tag, "STATE_NEW")
                 }
                 STATE_RINGING -> {
-                    Log.d(tag, "onStateChanged RINGING")
+                    Log.d(tag, "STATE_RINGING")
                 }
                 STATE_DIALING -> {
-                    Log.d(tag, "onStateChanged DIALING")
+                    Log.d(tag, "STATE_DIALING")
                 }
                 STATE_ACTIVE -> {
-                    Log.d(tag, "onStateChanged ACTIVE")
+                    Log.d(tag, "STATE_ACTIVE")
                 }
                 STATE_HOLDING -> {
-                    Log.d(tag, "onStateChanged HOLDING")
+                    Log.d(tag, "STATE_HOLDING")
                 }
                 STATE_DISCONNECTED -> {
-                    Log.d(tag, "onStateChanged DISCONNECTED")
+                    Log.d(tag, "STATE_DISCONNECTED")
                 }
                 STATE_PULLING_CALL -> {
-                    Log.d(tag, "onStateChanged PULLING_CALL")
+                    Log.d(tag, "STATE_PULLING_CALL")
                 }
             }
         }
@@ -76,5 +77,6 @@ class CallingViewModel(
 
     override fun onCleared() {
         telecomUseCase.removeConnectionStateChangedListener(listener)
+        super.onCleared()
     }
 }

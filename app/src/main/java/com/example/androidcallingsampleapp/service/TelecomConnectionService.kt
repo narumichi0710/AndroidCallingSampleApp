@@ -8,9 +8,9 @@ import android.telecom.TelecomManager
 import android.util.Log
 import com.example.androidcallingsampleapp.view.tag
 
-
 /// 通話開始をOSに伝えるためのサービスクラス
-open class TelecomConnectionService : ConnectionService() {
+open class TelecomConnectionService: ConnectionService() {
+    private val stateChangedListeners = mutableListOf<ConnectionStateChangedListener>()
 
     override fun onCreateIncomingConnection(
         connectionManagerPhoneAccount: PhoneAccountHandle?,
@@ -27,14 +27,11 @@ open class TelecomConnectionService : ConnectionService() {
         return connection
     }
 
-    companion object {
-        private val stateChangedListeners = mutableListOf<ConnectionStateChangedListener>()
-        fun addConnectionStateChangedListener(listener: ConnectionStateChangedListener) {
-            stateChangedListeners.add(listener)
-        }
+    fun addConnectionStateChangedListener(listener: ConnectionStateChangedListener) {
+        stateChangedListeners.add(listener)
+    }
 
-        fun removeConnectionStateChangedListener(listener: ConnectionStateChangedListener) {
-            stateChangedListeners.remove(listener)
-        }
+    fun removeConnectionStateChangedListener(listener: ConnectionStateChangedListener) {
+        stateChangedListeners.remove(listener)
     }
 }
