@@ -49,11 +49,17 @@ class MainActivity : ComponentActivity() {
 
     private fun requestAllPermissions() {
         var permissions = arrayOf(
-            Manifest.permission.CALL_PHONE,
-            Manifest.permission.MANAGE_OWN_CALLS,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.ANSWER_PHONE_CALLS,
             Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.WRITE_CALL_LOG
-        )
+            Manifest.permission.WRITE_CALL_LOG,
+            Manifest.permission.MANAGE_OWN_CALLS,
+            Manifest.permission.VIBRATE,
+            Manifest.permission.USE_FULL_SCREEN_INTENT,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.SYSTEM_ALERT_WINDOW,
+            Manifest.permission.RECEIVE_BOOT_COMPLETED
+            )
         getNotificationPermission()?.let { permissions += it }
         requestPermissionsLauncher.launch(permissions)
     }

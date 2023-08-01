@@ -2,14 +2,40 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+    <!-- Android13以降の通知許可 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
+    <!-- 通話状態 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+
+    <!-- 発信を行う場合に必要 -->
+    <!--    <uses-permission android:name="android.permission.CALL_PHONE" />-->
+    <!--    <uses-feature android:name="android.hardware.telephony" android:required="false" />-->
+
+    <!-- 通話履歴 -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
 
+    <!-- Telecom Managerの利用 -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
+    <!-- DTMFキーのバイブレーションや着信時のバイブレーション -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- フルスクリーンインテント -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- フォアグラウンドサービス -->
+    <!-- https://developer.android.com/guide/components/foreground-services -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- 通話応答画面をオーバーレイ表示 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- デバイス起動完了の受信 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
+        android:name=".CallingApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -19,6 +45,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidCallingSampleApp"
         tools:targetApi="31">
+
+        <!-- MainActivity -->
         <activity
             android:name=".view.MainActivity"
             android:exported="true"
@@ -26,10 +54,11 @@
             android:theme="@style/Theme.AndroidCallingSampleApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 通話応答用のActivity -->
         <activity
             android:name=".view.IncomingCallActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -37,6 +66,7 @@
             android:label="@string/calling_name"
             android:theme="@style/Theme.AndroidCallingSampleApp" />
 
+        <!-- Push通知 -->
         <service
             android:name=".service.CallingMessagingService"
             android:exported="false">
@@ -44,6 +74,8 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <!-- 通話応答画面の制御や通話の状態を管理 -->
         <service
             android:name=".service.TelecomConnectionService"
             android:exported="false"
