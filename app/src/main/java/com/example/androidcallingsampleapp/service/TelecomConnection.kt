@@ -9,6 +9,7 @@ import android.media.RingtoneManager
 import android.telecom.Connection
 import android.telecom.DisconnectCause
 import android.util.Log
+import com.example.androidcallingsampleapp.service.CallingMessagingService.Companion.channel
 import com.example.androidcallingsampleapp.view.IncomingCallActivity
 import com.example.androidcallingsampleapp.view.tag
 
@@ -53,8 +54,6 @@ class TelecomConnection(
 
     // カスタムのUIを表示する
     override fun onShowIncomingCallUi() {
-        // 通知チャンネルの作成
-        val channel = NotificationChannel(CHANNEL_ID, "着信通話", NotificationManager.IMPORTANCE_HIGH)
         // 通知チャンネルにカスタムサウンドを設定
         val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
         channel.setSound(ringtoneUri, AudioAttributes.Builder()
@@ -62,9 +61,6 @@ class TelecomConnection(
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         )
-        // NotificationManagerを取得して通知チャンネルを登録
-        val notificationManager = context.getSystemService(NotificationManager::class.java)
-        notificationManager.createNotificationChannel(channel)
 
         Log.d(tag, "onShowIncomingCallUi")
 

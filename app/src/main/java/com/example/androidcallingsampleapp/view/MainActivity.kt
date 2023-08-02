@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.example.androidcallingsampleapp.service.CHANNEL_ID
+import com.example.androidcallingsampleapp.service.CallingMessagingService.Companion.CHANNEL_ID
 import com.example.androidcallingsampleapp.ui.theme.AndroidCallingSampleAppTheme
 
 

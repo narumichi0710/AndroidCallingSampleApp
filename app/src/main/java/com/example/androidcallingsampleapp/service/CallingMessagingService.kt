@@ -1,6 +1,8 @@
 package com.example.androidcallingsampleapp.service
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -16,8 +18,6 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
 
-const val CHANNEL_ID = "channel_0"
-const val NOTIFICATION_ID = 0
 
 class CallingMessagingService : FirebaseMessagingService() {
 
@@ -79,6 +79,15 @@ class CallingMessagingService : FirebaseMessagingService() {
                 notify(NOTIFICATION_ID, builder.build())
             }
         }
+    }
+
+    companion object {
+        const val CHANNEL_ID = "channel_0"
+        const val NOTIFICATION_ID = 0
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "着信通話", NotificationManager.IMPORTANCE_HIGH
+        )
     }
 }
 
