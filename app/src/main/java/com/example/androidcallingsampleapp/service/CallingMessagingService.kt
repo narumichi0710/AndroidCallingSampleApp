@@ -16,10 +16,13 @@ import com.example.androidcallingsampleapp.R
 import com.example.androidcallingsampleapp.view.tag
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-
+import javax.inject.Inject
 
 
 class CallingMessagingService : FirebaseMessagingService() {
+
+    @Inject
+    lateinit var telecomUseCase: TelecomUseCase
 
     override fun onCreate() {
         Log.d(tag, "onCreate CallingMessagingService")
@@ -45,7 +48,7 @@ class CallingMessagingService : FirebaseMessagingService() {
             remoteMessage.data["caller_id_type"]!!,
             remoteMessage.data["has_video"]!!
         )
-        CallingApplication.instance.useCase.startIncoming(inComingData)
+        telecomUseCase.startIncoming(inComingData)
     }
 
     override fun onDeletedMessages() {

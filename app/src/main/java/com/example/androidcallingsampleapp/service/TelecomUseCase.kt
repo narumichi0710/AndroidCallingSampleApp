@@ -8,6 +8,7 @@ import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.util.Log
 import com.example.androidcallingsampleapp.view.tag
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 
 interface ITelecomUseCase {
@@ -30,7 +31,7 @@ interface ITelecomUseCase {
 }
 
 class TelecomUseCase(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val connectionService: TelecomConnectionService,
 ) : ITelecomUseCase {
     private val connections = mutableListOf<TelecomConnection>()
@@ -74,7 +75,7 @@ class TelecomUseCase(
             .setSupportedUriSchemes(listOf(PhoneAccount.SCHEME_SIP))
             .build()
         connectionService.registerPhoneAccount(account)
-        Log.d(tag, "initPhoneAccount: $account")
+        Log.d(tag, "createAccount: $account")
         return account
     }
 

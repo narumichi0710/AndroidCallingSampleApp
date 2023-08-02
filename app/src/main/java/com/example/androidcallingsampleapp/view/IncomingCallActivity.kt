@@ -38,6 +38,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.androidcallingsampleapp.CallingApplication
 import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.viewModel.CallingViewModel
+import javax.inject.Inject
 
 
 /*
@@ -50,8 +51,11 @@ import com.example.androidcallingsampleapp.viewModel.CallingViewModel
 
 class IncomingCallActivity : ComponentActivity() {
 
+    @Inject
+    lateinit var telecomUseCase: TelecomUseCase
+
     private val viewModel: CallingViewModel by viewModels {
-        ViewModelFactory(CallingApplication.instance.useCase)
+        ViewModelFactory(telecomUseCase)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

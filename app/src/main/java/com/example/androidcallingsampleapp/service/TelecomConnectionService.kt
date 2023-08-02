@@ -14,7 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.example.androidcallingsampleapp.view.tag
 
 /// 通話開始をOSに伝えるためのサービスクラス
-open class TelecomConnectionService(
+class TelecomConnectionService(
     private val telecomManager: TelecomManager
 ): ConnectionService() {
     private val stateChangedListeners = mutableListOf<ConnectionStateChangedListener>()

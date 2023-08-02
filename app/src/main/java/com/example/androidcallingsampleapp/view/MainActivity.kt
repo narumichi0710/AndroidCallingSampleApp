@@ -21,10 +21,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.androidcallingsampleapp.service.CallingMessagingService.Companion.CHANNEL_ID
+import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.ui.theme.AndroidCallingSampleAppTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var telecomUseCase: TelecomUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
