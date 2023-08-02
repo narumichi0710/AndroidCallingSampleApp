@@ -8,9 +8,7 @@ import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.telecom.Connection
 import android.telecom.DisconnectCause
-import android.telecom.TelecomManager
 import android.util.Log
-import androidx.core.content.ContextCompat.getSystemService
 import com.example.androidcallingsampleapp.view.IncomingCallActivity
 import com.example.androidcallingsampleapp.view.tag
 
@@ -75,4 +73,5 @@ class TelecomConnection(
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         context.startActivity(intent)
     }
+
 }

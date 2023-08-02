@@ -39,12 +39,13 @@ class CallingMessagingService : FirebaseMessagingService() {
 
     private fun startIncoming(remoteMessage: RemoteMessage) {
         Log.d(tag, "startIncoming")
-        val callerId = remoteMessage.data["caller_id"]
-        val callerName = remoteMessage.data["caller_name"]
-        val callerIdType = remoteMessage.data["caller_id_type"]
-        val hasVideo = remoteMessage.data["has_video"]
-        val application = CallingApplication.instance!!
-        application.useCase.startIncoming(application.account)
+        val inComingData = InComingData(
+            remoteMessage.data["caller_id"]!!,
+            remoteMessage.data["caller_name"]!!,
+            remoteMessage.data["caller_id_type"]!!,
+            remoteMessage.data["has_video"]!!
+        )
+        CallingApplication.instance.useCase.startIncoming(inComingData)
     }
 
     override fun onDeletedMessages() {
@@ -80,3 +81,10 @@ class CallingMessagingService : FirebaseMessagingService() {
         }
     }
 }
+
+data class InComingData(
+    val callerId: String,
+    val callerName: String,
+    val callerIdType: String,
+    val hasVideo: String
+)

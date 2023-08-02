@@ -2,22 +2,19 @@ package com.example.androidcallingsampleapp.service
 
 import android.content.ComponentName
 import android.content.Context
-import android.provider.Settings.Global.getString
 import android.telecom.Connection
-import android.telecom.ConnectionService
 import android.telecom.DisconnectCause
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
-import android.telecom.TelecomManager
 import android.util.Log
 import com.example.androidcallingsampleapp.view.tag
 
 
 interface ITelecomUseCase {
     // 初期化
-    fun initPhoneAccount(): PhoneAccount?
+    fun initPhoneAccount()
     // 着信
-    fun startIncoming(phoneAccount: PhoneAccount)
+    fun startIncoming(inComingData: InComingData)
     // 通話開始
     fun activate()
     // 通話拒否
@@ -34,10 +31,10 @@ interface ITelecomUseCase {
 
 class TelecomUseCase(
     private val context: Context,
-    private val telecomManager: TelecomManager,
-    private val telecomConnectionService: TelecomConnectionService,
+    private val connectionService: TelecomConnectionService,
 ) : ITelecomUseCase {
     private val connections = mutableListOf<TelecomConnection>()
+    var account: PhoneAccount? = null
 
     init {
         // Connectionのaddやremoveをするためにリスナーをセット
@@ -59,32 +56,56 @@ class TelecomUseCase(
                 }
             }
         }
-        telecomConnectionService.addConnectionStateChangedListener(listener)
+        connectionService.addConnectionStateChangedListener(listener)
     }
 
-    override fun initPhoneAccount(): PhoneAccount? {
+    override fun initPhoneAccount() {
+        account = findExistingAccount(context)
+        if (account == null) { account = createAccount() }
+    }
 
+    private fun createAccount(): PhoneAccount {
         val accountHandle = PhoneAccountHandle(
             ComponentName(context, TelecomConnectionService::class.java),
             context.packageName
         )
-
         val account = PhoneAccount.builder(accountHandle, "AndroidCallingSampleApp")
             .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
             .setSupportedUriSchemes(listOf(PhoneAccount.SCHEME_SIP))
             .build()
-
-        telecomManager.registerPhoneAccount(account)
+        connectionService.registerPhoneAccount(account)
         Log.d(tag, "initPhoneAccount: $account")
         return account
     }
 
+    private fun findExistingAccount(context: Context): PhoneAccount? {
+        try {
+            var account: PhoneAccount? = null
+            val phoneAccountHandleList = connectionService.getSelfManagedPhoneAccounts(context) ?: return null
+            val connectionService = ComponentName(context, TelecomConnectionService::class.java)
+            for (phoneAccountHandle in phoneAccountHandleList) {
+                if (phoneAccountHandle.componentName == connectionService) {
+                    Log.d(tag,"Found existing phone account: ${this.account}")
+                    account = this.account
+                    break
+                }
+            }
+            if (account == null) {
+                Log.d(tag,"Existing phone account not found")
+            }
+            return account
+        } catch (se: SecurityException) {
+            Log.d(tag,"Can't check phone accounts: $se")
+        }
+        return null
+    }
 
-    override fun startIncoming(phoneAccount: PhoneAccount) {
-        telecomManager.addNewIncomingCall(
-            phoneAccount.accountHandle,
-            phoneAccount.extras
-        )
+    override fun startIncoming(inComingData: InComingData) {
+        if (account == null) {
+            Log.d(tag,"startIncoming: Account not found. so called initPhoneAccount()")
+            initPhoneAccount()
+        }
+        connectionService.addNewIncomingCall(account, inComingData)
     }
 
     override fun activate() {
@@ -118,12 +139,12 @@ class TelecomUseCase(
 
     override fun addConnectionStateChangedListener(listener: ConnectionStateChangedListener) {
         Log.d(tag, "addConnectionStateChangedListener: $listener")
-        telecomConnectionService.addConnectionStateChangedListener(listener)
+        connectionService.addConnectionStateChangedListener(listener)
     }
 
     override fun removeConnectionStateChangedListener(listener: ConnectionStateChangedListener) {
         Log.d(tag, "removeConnectionStateChangedListener: $listener")
-        telecomConnectionService.removeConnectionStateChangedListener(listener)
+        connectionService.removeConnectionStateChangedListener(listener)
     }
 
     private fun startConnection(connection: TelecomConnection) {

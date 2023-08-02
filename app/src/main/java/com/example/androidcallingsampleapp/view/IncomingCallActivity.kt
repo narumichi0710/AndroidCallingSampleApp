@@ -51,7 +51,7 @@ import com.example.androidcallingsampleapp.viewModel.CallingViewModel
 class IncomingCallActivity : ComponentActivity() {
 
     private val viewModel: CallingViewModel by viewModels {
-        ViewModelFactory(CallingApplication.instance!!.useCase)
+        ViewModelFactory(CallingApplication.instance.useCase)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
