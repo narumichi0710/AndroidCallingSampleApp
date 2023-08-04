@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                     Box(
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "応答待ち", fontWeight = FontWeight.Bold)
+                        Text(text = "着信待ち")
                     }
                 }
             }
