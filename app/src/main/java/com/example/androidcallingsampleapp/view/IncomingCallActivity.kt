@@ -3,11 +3,15 @@ package com.example.androidcallingsampleapp.view
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,59 +32,64 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import coil.compose.rememberAsyncImagePainter
-import com.example.androidcallingsampleapp.CallingApplication
 import com.example.androidcallingsampleapp.service.TelecomUseCase
-import com.example.androidcallingsampleapp.viewModel.CallingViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 
-/*
-* 1. Push通知受け取った際に、useCaseを通じてtelecomManagerに対してaddNewIncomingCall()を実行し、新しい着信をTelecomサブシステムに通知する
-* 2. TelecomサブシステムはTelecomConnectionServiceの実装にバインドしonCreateIncomingConnection() メソッドを使用して、新しい着信をConnectionクラスにリクエストする
-* 3. TelecomサブシステムがonShowIncomingCallUi()メソッドを使用して、アプリに対し、通話応答画面を表示する必要があることを通知する
-* 4. アプリが関連する全画面インテントを持つ通知を使用して着信 UI を表示します。詳しくは onShowIncomingCallUi() をご覧ください
-* 5. ユーザーが着信に応答した場合は setActive() メソッドを呼び出し、着信を拒否した場合はsetDisconnected()を呼び出した後、destroy()を呼び出す
-*/
-
+@AndroidEntryPoint
 class IncomingCallActivity : ComponentActivity() {
 
     @Inject
     lateinit var telecomUseCase: TelecomUseCase
 
-    private val viewModel: CallingViewModel by viewModels {
-        ViewModelFactory(telecomUseCase)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(tag, "onCreate IncomingCallActivity")
-        // 画面がロックされていても表示するように設定
-        setShowWhenLocked(true)
-        // 画面をオンにするように設定
-        setTurnScreenOn(true)
-        // キーガード（ロック画面）を非表示にするリクエスト
+        setIncomingCallSetting()
+        val path = intent.getStringExtra("path")
+        val intent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            action = Intent.ACTION_VIEW
+            data = Uri.parse(path)
+        }
+        setContent {
+            IncomingCallScreen(
+                onActivate = {
+                    telecomUseCase.activate()
+                    startActivity(intent)
+                },
+                onReject = {
+                    telecomUseCase.reject()
+                    finish()
+                }
+            )
+        }
+    }
+
+    private fun setIncomingCallSetting() {
+        // 画面がロックされていても画面をオンにするように設定
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        } else {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
+        // キーガード（ロック画面）を非表示にする
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         keyguardManager.requestDismissKeyguard(this, null)
-
-        setContent {
-            IncomingCallScreen(viewModel) {
-                finishAffinity()
-            }
-        }
     }
 }
 
 @Composable
 fun IncomingCallScreen(
-    viewModel: CallingViewModel,
-    onFinish: () -> Unit
+    onActivate: () -> Unit,
+    onReject: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -89,14 +98,20 @@ fun IncomingCallScreen(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = rememberAsyncImagePainter("https://source.unsplash.com/random"),
-                contentDescription = "Profile Picture",
+            Box(
                 modifier = Modifier
-                    .size(150.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+                    .size(128.dp)
+                    .clip(CircleShape)
+                    .background(color = Color.Yellow),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "sample",
+                    fontSize = 34.sp,
+                    color = Color.Black,
+                    maxLines = 1
+                )
+            }
             Text(
                 text = "hogehoge",
                 color = Color.White,
@@ -112,35 +127,19 @@ fun IncomingCallScreen(
                     .padding(horizontal = 32.dp)
             ) {
                 Button(
-                    onClick = {
-                        viewModel.activateCall()
-                        // TODO: 通話画面に遷移させる
-                    },
-                    modifier = Modifier.weight(1f),
+                    onClick = onActivate,
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(text = "応答")
                 }
 
                 Button(
-                    onClick = {
-                        viewModel.rejectCall()
-                        onFinish()
-                    },
-                    modifier = Modifier.weight(1f),
+                    onClick = onReject,
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(text = "拒否")
                 }
             }
         }
-    }
-}
-
-class ViewModelFactory(private val telecomUseCase: TelecomUseCase) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(CallingViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return CallingViewModel(telecomUseCase) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -23,7 +23,7 @@ class AppModule {
     ): TelecomUseCase {
         return TelecomUseCase(
             context,
-            TelecomConnectionService(context.getSystemService(TelecomManager::class.java))
+            context.getSystemService(TelecomManager::class.java)
         )
     }
 }

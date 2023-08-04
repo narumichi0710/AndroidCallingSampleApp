@@ -1,9 +1,12 @@
 package com.example.androidcallingsampleapp.view
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -20,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.example.androidcallingsampleapp.service.CallingMessagingService
 import com.example.androidcallingsampleapp.service.CallingMessagingService.Companion.CHANNEL_ID
 import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.ui.theme.AndroidCallingSampleAppTheme
@@ -36,7 +40,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         createNotificationChannel()
         requestAllPermissions()
-
+        telecomUseCase.initPhoneAccount()
         setContent {
             AndroidCallingSampleAppTheme {
                 Surface(
@@ -72,7 +76,15 @@ class MainActivity : ComponentActivity() {
 
     // 通知チャンネルを作成
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, "sampleName", NotificationManager.IMPORTANCE_HIGH)
+        val channel = CallingMessagingService.channel
+        channel.setSound(
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        )
+        channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         with(NotificationManagerCompat.from(this)) {
             createNotificationChannel(channel)
         }
