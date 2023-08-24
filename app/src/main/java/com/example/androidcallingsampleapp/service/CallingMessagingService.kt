@@ -48,17 +48,14 @@ class CallingMessagingService : FirebaseMessagingService() {
 
     private fun startIncoming(remoteMessage: RemoteMessage) {
         // 着信をリクエスト
-        telecomUseCase.startIncoming(IncomingData("0123456789", "hoge", "1", "false"))
-        Thread.sleep(3000)
-        // TODO: 通話状態が可能であることを受け取ることが出来た場合にIntentさせる必要がある
-        if (telecomUseCase.currentState == Connection.STATE_RINGING) {
-            Log.d(tag, "通話応答画面を表示")
-            val intent = Intent(this, IncomingCallActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                action = Intent.ACTION_VIEW
-            }
-            this.startActivity(intent)
-        }
+        telecomUseCase.startIncoming(
+            IncomingData(
+            "0123456789",
+            "hoge",
+            "1",
+            "false"
+            )
+        )
     }
 
     private fun sendMessage(remoteMessage: RemoteMessage) {
