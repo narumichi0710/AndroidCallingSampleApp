@@ -15,7 +15,7 @@ class TelecomConnectionService: ConnectionService() {
         request: ConnectionRequest?
     ): Connection {
         Log.d(tag,"onCreateIncomingConnection $connectionManagerPhoneAccount, $request")
-        return TelecomConnection(stateChangedListeners).apply { setRinging() }
+        return TelecomConnection(this, stateChangedListeners).apply { setRinging() }
     }
 
     // 通話が不可能な場合に呼び出される

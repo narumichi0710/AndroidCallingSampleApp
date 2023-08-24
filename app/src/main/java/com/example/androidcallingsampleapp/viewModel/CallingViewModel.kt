@@ -1,16 +1,9 @@
 package com.example.androidcallingsampleapp.viewModel
 
 
-import android.telecom.Connection.STATE_ACTIVE
-import android.telecom.Connection.STATE_DIALING
-import android.telecom.Connection.STATE_DISCONNECTED
-import android.telecom.Connection.STATE_HOLDING
-import android.telecom.Connection.STATE_INITIALIZING
-import android.telecom.Connection.STATE_NEW
-import android.telecom.Connection.STATE_PULLING_CALL
-import android.telecom.Connection.STATE_RINGING
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.example.androidcallingsampleapp.service.ConnectionState
 import com.example.androidcallingsampleapp.service.ConnectionStateChangedListener
 import com.example.androidcallingsampleapp.service.TelecomConnection
 import com.example.androidcallingsampleapp.service.TelecomUseCase
@@ -23,33 +16,33 @@ class CallingViewModel(
 
     private val listener = object : ConnectionStateChangedListener {
         override fun onStateChanged(
-            state: Int,
+            state: ConnectionState,
             connection: TelecomConnection
         ) {
             when(state) {
-                STATE_INITIALIZING -> {
+                ConnectionState.INITIALIZING -> {
                     Log.d(tag, "STATE_INITIALIZING")
                 }
-                STATE_NEW -> {
+                ConnectionState.NEW -> {
                     Log.d(tag, "STATE_NEW")
                 }
-                STATE_RINGING -> {
+                ConnectionState.RINGING -> {
                     Log.d(tag, "STATE_RINGING")
                 }
-                STATE_DIALING -> {
+                ConnectionState.DIALING -> {
                     Log.d(tag, "STATE_DIALING")
                 }
-                STATE_ACTIVE -> {
+                ConnectionState.ACTIVE -> {
                     Log.d(tag, "STATE_ACTIVE")
                 }
-                STATE_HOLDING -> {
+                ConnectionState.HOLDING -> {
                     Log.d(tag, "STATE_HOLDING")
                 }
-                STATE_DISCONNECTED -> {
+                ConnectionState.DISCONNECTED -> {
                     Log.d(tag, "STATE_DISCONNECTED")
                 }
-                STATE_PULLING_CALL -> {
-                    Log.d(tag, "STATE_PULLING_CALL")
+                ConnectionState.UNKNOWN -> {
+                    Log.d(tag, "UNKNOWN")
                 }
             }
         }
@@ -65,10 +58,6 @@ class CallingViewModel(
 
     fun rejectCall() {
         telecomUseCase.reject()
-    }
-
-    fun holdCall() {
-        telecomUseCase.hold()
     }
 
     fun disconnectCall() {
