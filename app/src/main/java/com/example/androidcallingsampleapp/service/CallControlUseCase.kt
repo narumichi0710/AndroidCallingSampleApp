@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 class CallControlUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val store: CallControlStore
+    val store: CallControlStore
 ) {
     private val telecomManager: TelecomManager = context.getSystemService(
         TelecomManager::class.java
