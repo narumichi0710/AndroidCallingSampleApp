@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
@@ -23,12 +24,14 @@ class CallControlUseCase @Inject constructor(
     )
 
     init {
-        resetAllPhoneAccounts()
+       // resetAllPhoneAccounts()
     }
 
     // 着信をリクエストする
     fun startIncoming(data: CallRequestData) {
-        val account = createOrFindPhoneAccount(data.uuid, false)
+        if (data.uuid == null) return
+        val address = Uri.fromParts(PhoneAccount.SCHEME_SIP, data.appLinkString, null)
+        val account = createOrFindPhoneAccount(data.uuid, address)
         val extras = TelecomConnection.getBundle(data, account.accountHandle)
         telecomManager.addNewIncomingCall(account.accountHandle, extras)
         Log.d(tag,"start incoming: ${data.title}")
@@ -36,6 +39,7 @@ class CallControlUseCase @Inject constructor(
 
     // 発信をリクエストする
     fun startOutgoing(data: CallRequestData) {
+        if (data.uuid == null) return
         if (
             ActivityCompat.checkSelfPermission(
                 context,
@@ -49,8 +53,8 @@ class CallControlUseCase @Inject constructor(
             Log.d(tag,"start outgoing: already has connection")
             return
         }
-
-        val account = createOrFindPhoneAccount(data.uuid, true)
+        val address = Uri.fromParts(PhoneAccount.SCHEME_SIP, data.appLinkString, null)
+        val account = createOrFindPhoneAccount(data.uuid, address)
         val extras = TelecomConnection.getBundle(data, account.accountHandle)
         try {
             telecomManager.placeCall(account.address, extras)
@@ -67,21 +71,20 @@ class CallControlUseCase @Inject constructor(
         store.fetchConnection(id)?.onReject()
     }
 
-    private fun createOrFindPhoneAccount(id: String?, isOutgoing: Boolean): PhoneAccount {
-        val handle = PhoneAccountHandle(
-            ComponentName(context, TelecomConnectionService::class.java),
-            id ?: "unknownId"
-        )
-        if (isExistingPhoneAccount(handle).not()) {
-            registerPhoneAccount(handle, isOutgoing)
-        }
+    fun onDisconnect(id: String?) {
+        store.fetchConnection(id)?.onDisconnect()
+    }
 
+    private fun createOrFindPhoneAccount(id: String, address: Uri): PhoneAccount {
+        val handle = PhoneAccountHandle(ComponentName(context, TelecomConnectionService::class.java), id)
+        if (isExistingPhoneAccount(handle).not()) {
+            registerPhoneAccount(handle, address)
+        }
         return telecomManager.getPhoneAccount(handle)
     }
 
-    private fun registerPhoneAccount(handle: PhoneAccountHandle, isOutgoing: Boolean) {
-        val label = if (isOutgoing) "outgoing" else "incoming"
-        val newAccount = TelecomConnection.getNewAccount(label, handle)
+    private fun registerPhoneAccount(handle: PhoneAccountHandle, address: Uri) {
+        val newAccount = TelecomConnection.getNewAccount(address, handle)
         try {
             checkVisibleCallState(newAccount)
             telecomManager.registerPhoneAccount(newAccount)

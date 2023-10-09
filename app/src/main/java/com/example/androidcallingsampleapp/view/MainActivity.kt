@@ -2,6 +2,7 @@ package com.example.androidcallingsampleapp.view
 
 import android.Manifest
 import android.app.Notification
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
@@ -22,15 +23,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -52,10 +52,20 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var useCase: CallControlUseCase
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         createNotificationChannel()
         requestAllPermissions()
+
+        val outgoingIntent = Intent(this, OutgoingCallActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
         setContent {
             AndroidCallingSampleAppTheme {
                 Surface(
@@ -65,97 +75,98 @@ class MainActivity : ComponentActivity() {
                     val connections = useCase.store.connections.collectAsState().value
 
                     Column {
-                        Column(modifier = Modifier
-                            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-                        ) {
-                            connections.forEach {
-                                it.requestData?.title?.let { title ->
-                                    Spacer(modifier = Modifier.padding(top = 16.dp))
-                                    Card(modifier = Modifier.fillMaxWidth()) {
-                                        Row(
-                                            verticalAlignment = CenterVertically,
-                                            modifier = Modifier.padding(16.dp)
-                                        ) {
-                                            Text(
-                                                title,
-                                                style = MaterialTheme.typography.bodyLarge
+                        if (connections.isEmpty() || connections.any { it.requestData?.uuid == null }) {
+                            Text(
+                                text = "Sample Calling App",
+                                modifier = Modifier.padding(8.dp),
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Divider()
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            useCase.startIncoming(
+                                                CallRequestData(
+                                                    UUID
+                                                        .randomUUID()
+                                                        .toString(),
+                                                    "incoming call",
+                                                    "content",
+                                                    false,
+                                                    "appLinkString"
+                                                )
                                             )
-                                            Spacer(modifier = Modifier.weight(1f))
-                                            Button(
-                                                onClick = { it.onDisconnect() },
-                                                content = { Text("disconnect") }
-                                            )
+                                        }
+                                        .background(
+                                            MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = "Incoming Call",
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            startActivity(outgoingIntent)
+                                        }
+                                        .background(
+                                            MaterialTheme.colorScheme.secondary,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = "Outgoing Call",
+                                        color = MaterialTheme.colorScheme.onSecondary
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                            ) {
+                                connections.forEach {
+                                    it.requestData?.title?.let { title ->
+                                        Spacer(modifier = Modifier.padding(top = 16.dp))
+                                        Card(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                verticalAlignment = CenterVertically,
+                                                modifier = Modifier.padding(16.dp)
+                                            ) {
+                                                Text(
+                                                    title,
+                                                    style = MaterialTheme.typography.bodyLarge
+                                                )
+                                                Spacer(modifier = Modifier.padding(4.dp))
+                                                Text(it.callState.name)
+                                                Spacer(modifier = Modifier.weight(1f))
+                                                Button(
+                                                    onClick = { it.onDisconnect() },
+                                                    content = { Text("disconnect") }
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        Divider()
-
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        useCase.startIncoming(
-                                            CallRequestData(
-                                                UUID
-                                                    .randomUUID()
-                                                    .toString(),
-                                                "incoming call",
-                                                "content",
-                                                false
-                                            )
-                                        )
-                                    }
-                                    .background(
-                                        MaterialTheme.colorScheme.primary,
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = "Incoming Call",
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        useCase.startOutgoing(
-                                            CallRequestData(
-                                                UUID
-                                                    .randomUUID()
-                                                    .toString(),
-                                                "outgoing call",
-                                                "content",
-                                                true
-                                            )
-                                        )
-                                    }
-                                    .background(
-                                        MaterialTheme.colorScheme.secondary,
-                                        shape = RoundedCornerShape(8.dp)
-                                    )
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = "Outgoing Call",
-                                    color = MaterialTheme.colorScheme.onSecondary
-                                )
+                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
@@ -215,9 +226,9 @@ class MainActivity : ComponentActivity() {
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grantStates: Map<String, Boolean> ->
-        for ((permission, granted) in grantStates) {
-            Log.d(tag,"$permission - $granted")
-        }
+//        for ((permission, granted) in grantStates) {
+//            Log.d(tag,"$permission - $granted")
+//        }
     }
 }
 

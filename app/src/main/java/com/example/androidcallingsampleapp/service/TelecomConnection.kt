@@ -4,10 +4,8 @@ package com.example.androidcallingsampleapp.service
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
-import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
-import android.nfc.TagLostException
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -16,9 +14,8 @@ import android.telecom.DisconnectCause
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.telecom.VideoProfile
 import android.util.Log
-import androidx.core.content.ContextCompat
-import com.example.androidcallingsampleapp.store.CallControlStore
 import com.example.androidcallingsampleapp.view.IncomingCallActivity
 import com.example.androidcallingsampleapp.view.tag
 
@@ -71,6 +68,7 @@ class TelecomConnection(
     init {
         setInitializing()
         connectionProperties = PROPERTY_SELF_MANAGED
+        audioModeIsVoip = true
     }
 
     override fun onStateChanged(state: Int) {
@@ -89,6 +87,7 @@ class TelecomConnection(
         Log.d(tag, "onReject")
         stopRingtoneAndVibrate()
         setDisconnected(DisconnectCause(DisconnectCause.REJECTED))
+        destroy()
     }
 
     fun onMissed() {
@@ -105,8 +104,6 @@ class TelecomConnection(
 
     override fun onShowIncomingCallUi() {
         Log.d(tag, "onShowIncomingCallUi, $extras")
-
-        this.requestData = extras.getRequestData()
 
         if (keyguardManager.isKeyguardLocked.not()) {
             // TODO: show fullScreenIntent instead of Incoming Screen
@@ -171,18 +168,29 @@ class TelecomConnection(
                     TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
                     accountHandle
                 )
+                putInt(
+                    TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE,
+                    VideoProfile.STATE_BIDIRECTIONAL
+                )
                 putRequestData(requestData)
             }
         }
 
         fun getNewAccount(
-            label: String,
+            address: Uri,
             accountHandle: PhoneAccountHandle
         ): PhoneAccount {
-            return PhoneAccount.builder(accountHandle, "").apply {
-                setAddress(Uri.fromParts(PhoneAccount.SCHEME_SIP, label, null))
+            return PhoneAccount.builder(
+                accountHandle,
+                address.toString()
+            ).apply {
+                setAddress(address)
                 setSupportedUriSchemes(listOf(PhoneAccount.SCHEME_SIP))
-                setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+                setCapabilities(
+                    PhoneAccount.CAPABILITY_SELF_MANAGED or
+                            PhoneAccount.CAPABILITY_VIDEO_CALLING or
+                            PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING
+                )
             }.build()
         }
     }

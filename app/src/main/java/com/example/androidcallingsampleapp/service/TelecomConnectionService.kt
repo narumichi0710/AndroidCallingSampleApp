@@ -26,7 +26,7 @@ class TelecomConnectionService: ConnectionService() {
         Log.d(tag, "onCreateIncomingConnection $connectionManagerPhoneAccount, $request")
 
         return TelecomConnection(this, ::eventHandler).apply {
-            request?.extras?.let { this.putExtras(it) }
+            requestData = request?.extras?.getRequestData()
             setRinging()
         }
     }
@@ -50,7 +50,7 @@ class TelecomConnectionService: ConnectionService() {
             "onCreate Outgoing Connection: ${phoneAccount?.componentName}, ${request?.extras}"
         )
         return TelecomConnection(this, ::eventHandler).apply {
-            request?.extras?.let { this.putExtras(it) }
+            requestData = request?.extras?.getRequestData()
             setRinging()
             setActive()
         }
@@ -70,14 +70,24 @@ class TelecomConnectionService: ConnectionService() {
             is TelecomConnection.Handler.State -> {
                 val state = type.state
                 val connection = type.connection
+                val uuid = connection.requestData?.uuid
 
                 when (state) {
                     ConnectionState.RINGING -> {
                         store.addConnection(connection)
                     }
-                    ConnectionState.ACTIVE -> {}
+                    ConnectionState.ACTIVE -> {
+                        store.updateCurrentConnectionId(uuid)
+
+                        // 割り込み着信に応答した場合、他の通話を終了させる
+                        if (store.connections.value.count() > 1) {
+                            store.connections.value
+                                .filter { it.requestData?.uuid != uuid }
+                                .forEach { it.onDisconnect() }
+                        }
+                    }
                     ConnectionState.DISCONNECTED -> {
-                        store.deleteConnection(connection.requestData?.uuid)
+                        store.deleteConnection(uuid)
                     }
                     else -> return
                 }

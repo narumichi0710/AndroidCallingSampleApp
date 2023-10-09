@@ -42,7 +42,6 @@
             </intent-filter>
         </activity>
 
-        <!-- 通話応答用のActivity -->
         <activity
             android:name=".view.IncomingCallActivity"
             android:label="@string/app_name"
@@ -56,6 +55,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="tel" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".view.OutgoingCallActivity"
+            android:label="@string/app_name"
+            android:exported="true">
         </activity>
 
         <!-- Push通知 -->
