@@ -2,8 +2,7 @@ package com.example.androidcallingsampleapp.view
 
 import android.Manifest
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
@@ -13,44 +12,163 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.example.androidcallingsampleapp.service.CallControlUseCase
+import com.example.androidcallingsampleapp.service.CallRequestData
 import com.example.androidcallingsampleapp.service.CallingMessagingService
-import com.example.androidcallingsampleapp.service.CallingMessagingService.Companion.CHANNEL_ID
-import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.ui.theme.AndroidCallingSampleAppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.UUID
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var telecomUseCase: TelecomUseCase
+    lateinit var useCase: CallControlUseCase
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         createNotificationChannel()
         requestAllPermissions()
-        telecomUseCase.initPhoneAccount()
+
+        val outgoingIntent = Intent(this, OutgoingCallActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
         setContent {
             AndroidCallingSampleAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "着信待ち")
+                    val connections = useCase.store.connections.collectAsState().value
+
+                    Column {
+                        if (connections.isEmpty() || connections.any { it.requestData?.uuid == null }) {
+                            Text(
+                                text = "Sample Calling App",
+                                modifier = Modifier.padding(8.dp),
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Divider()
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            useCase.startIncoming(
+                                                CallRequestData(
+                                                    UUID
+                                                        .randomUUID()
+                                                        .toString(),
+                                                    "incoming call",
+                                                    "content",
+                                                    false,
+                                                    "appLinkString"
+                                                )
+                                            )
+                                        }
+                                        .background(
+                                            MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = "Incoming Call",
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            startActivity(outgoingIntent)
+                                        }
+                                        .background(
+                                            MaterialTheme.colorScheme.secondary,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = "Outgoing Call",
+                                        color = MaterialTheme.colorScheme.onSecondary
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+                            ) {
+                                connections.forEach {
+                                    it.requestData?.title?.let { title ->
+                                        Spacer(modifier = Modifier.padding(top = 16.dp))
+                                        Card(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                verticalAlignment = CenterVertically,
+                                                modifier = Modifier.padding(16.dp)
+                                            ) {
+                                                Text(
+                                                    title,
+                                                    style = MaterialTheme.typography.bodyLarge
+                                                )
+                                                Spacer(modifier = Modifier.padding(4.dp))
+                                                Text(it.callState.name)
+                                                Spacer(modifier = Modifier.weight(1f))
+                                                Button(
+                                                    onClick = { it.onDisconnect() },
+                                                    content = { Text("disconnect") }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
@@ -61,14 +179,9 @@ class MainActivity : ComponentActivity() {
         var permissions = arrayOf(
             Manifest.permission.MANAGE_OWN_CALLS,
             Manifest.permission.CALL_PHONE,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.VIBRATE,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.WRITE_CONTACTS,
-            Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.WRITE_CALL_LOG
-            )
+            Manifest.permission.READ_PHONE_NUMBERS,
+            Manifest.permission.READ_PHONE_STATE
+        )
         getNotificationPermission()?.let { permissions += it }
         requestPermissionsLauncher.launch(permissions)
     }
@@ -113,9 +226,9 @@ class MainActivity : ComponentActivity() {
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grantStates: Map<String, Boolean> ->
-        for ((permission, granted) in grantStates) {
-            Log.d(tag,"$permission - $granted")
-        }
+//        for ((permission, granted) in grantStates) {
+//            Log.d(tag,"$permission - $granted")
+//        }
     }
 }
 

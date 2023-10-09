@@ -1,20 +1,13 @@
 package com.example.androidcallingsampleapp.view
 
-
-import android.app.KeyguardManager
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -22,11 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,66 +29,62 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.androidcallingsampleapp.service.CallControlUseCase
-import com.example.androidcallingsampleapp.service.getRequestData
+import com.example.androidcallingsampleapp.service.CallRequestData
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import java.util.UUID
 import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class IncomingCallActivity : ComponentActivity() {
+class OutgoingCallActivity : ComponentActivity() {
 
     @Inject
     lateinit var useCase: CallControlUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(tag, "onCreate IncomingCallActivity")
-
-        setIncomingCallSetting()
-        val requestData = intent.getRequestData()
 
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             action = Intent.ACTION_VIEW
         }
 
+        val requestData = CallRequestData(
+            UUID
+                .randomUUID()
+                .toString(),
+            "outgoing call",
+            "content",
+            true,
+            "appLinkString"
+        )
+        useCase.startOutgoing(requestData)
+
         setContent {
-            IncomingCallScreen(
-                incomingName = requestData?.title,
-                onActivate = {
-                    useCase.onAnswer(requestData?.uuid)
+            OutgoingCallScreen(
+                onConnected = {
                     startActivity(intent)
                 },
-                onReject = {
-                    useCase.onReject(requestData?.uuid)
+                onDisconnected = {
+                    useCase.onDisconnect(requestData?.uuid)
                     startActivity(intent)
                 }
             )
         }
     }
-
-    private fun setIncomingCallSetting() {
-        // 画面がロックされていても画面をオンにするように設定
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-            )
-        } else {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-        }
-        // キーガード（ロック画面）を非表示にする
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        keyguardManager.requestDismissKeyguard(this, null)
-    }
 }
 
 @Composable
-fun IncomingCallScreen(
-    incomingName: String?,
-    onActivate: () -> Unit = {},
-    onReject: () -> Unit = {}
+fun OutgoingCallScreen(
+    onConnected: () -> Unit = {},
+    onDisconnected: () -> Unit = {}
 ) {
+    LaunchedEffect(Unit) {
+        delay(2000L)
+        onConnected()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -104,7 +93,7 @@ fun IncomingCallScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = incomingName ?: "着信",
+            text = "Calling...",
             fontSize = 32.sp,
             color = Color.White,
             maxLines = 1,
@@ -118,21 +107,12 @@ fun IncomingCallScreen(
             color = Color.White
         )
         Spacer(modifier = Modifier.weight(1f))
-        Row(modifier = Modifier.padding(46.dp)) {
-            IconButton(
-                text = "拒否",
-                image = Icons.Filled.CallEnd,
-                color = Color.Red,
-                onClick = onReject
-            )
-            Spacer(Modifier.weight(1f))
-            IconButton(
-                text = "応答",
-                image = Icons.Filled.Call,
-                color = Color.Green,
-                onClick = onActivate
-            )
-        }
+        IconButton(
+            text = "終了",
+            image = Icons.Filled.CallEnd,
+            color = Color.Red,
+            onClick = onDisconnected
+        )
     }
 }
 

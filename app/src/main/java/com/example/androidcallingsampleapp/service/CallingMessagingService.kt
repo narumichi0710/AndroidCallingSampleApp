@@ -6,24 +6,23 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.telecom.Connection
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.androidcallingsampleapp.view.MainActivity
 import com.example.androidcallingsampleapp.R
-import com.example.androidcallingsampleapp.view.IncomingCallActivity
 import com.example.androidcallingsampleapp.view.tag
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import java.util.UUID
 import javax.inject.Inject
 
 
 class CallingMessagingService : FirebaseMessagingService() {
 
     @Inject
-    lateinit var telecomUseCase: TelecomUseCase
+    lateinit var useCase: CallControlUseCase
 
     override fun onCreate() {
         Log.d(tag, "onCreate CallingMessagingService")
@@ -48,12 +47,12 @@ class CallingMessagingService : FirebaseMessagingService() {
 
     private fun startIncoming(remoteMessage: RemoteMessage) {
         // 着信をリクエスト
-        telecomUseCase.startIncoming(
-            IncomingData(
-            "0123456789",
-            "hoge",
-            "1",
-            "false"
+        useCase.startIncoming(
+            CallRequestData(
+                UUID.randomUUID().toString(),
+                "incoming call",
+                "content",
+                false
             )
         )
     }
