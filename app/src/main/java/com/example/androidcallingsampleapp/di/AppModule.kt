@@ -1,9 +1,8 @@
 package com.example.androidcallingsampleapp.di
 
 import android.content.Context
-import android.telecom.TelecomManager
-import com.example.androidcallingsampleapp.service.TelecomConnectionService
-import com.example.androidcallingsampleapp.service.TelecomUseCase
+import com.example.androidcallingsampleapp.service.CallControlUseCase
+import com.example.androidcallingsampleapp.store.CallControlStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,12 +17,13 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideTelecomUseCase(
-        @ApplicationContext context: Context
-    ): TelecomUseCase {
-        return TelecomUseCase(
+    fun provideCallControlUseCase(
+        @ApplicationContext context: Context,
+        callControlStore: CallControlStore
+    ): CallControlUseCase {
+        return CallControlUseCase(
             context,
-            context.getSystemService(TelecomManager::class.java)
+            callControlStore
         )
     }
 }

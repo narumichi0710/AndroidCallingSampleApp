@@ -2,8 +2,6 @@ package com.example.androidcallingsampleapp.view
 
 import android.Manifest
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.RingtoneManager
@@ -24,35 +22,34 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.modifier.modifierLocalConsumer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.example.androidcallingsampleapp.service.CallControlUseCase
+import com.example.androidcallingsampleapp.service.CallRequestData
 import com.example.androidcallingsampleapp.service.CallingMessagingService
-import com.example.androidcallingsampleapp.service.CallingMessagingService.Companion.CHANNEL_ID
-import com.example.androidcallingsampleapp.service.TelecomUseCase
 import com.example.androidcallingsampleapp.ui.theme.AndroidCallingSampleAppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.UUID
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var telecomUseCase: TelecomUseCase
+    lateinit var useCase: CallControlUseCase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createNotificationChannel()
         requestAllPermissions()
-        telecomUseCase.initPhoneAccount()
         setContent {
             AndroidCallingSampleAppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     Column(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -62,13 +59,36 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .padding(8.dp)
                                 .clickable {
-                                    // TODO: 発信
+                                    useCase.startIncoming(
+                                        CallRequestData(
+                                            UUID.randomUUID().toString(),
+                                            "incoming call",
+                                            "content",
+                                            false
+                                        )
+                                    )
                                 }
                         ) {
-                            Text(text = "通話状態に変更")
+                            Text(text = "Incoming Call")
+                        }
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .clickable {
+                                    useCase.startOutgoing(
+                                        CallRequestData(
+                                            UUID.randomUUID().toString(),
+                                            "outgoing call",
+                                            "content",
+                                            true
+                                        )
+                                    )
+                                }
+                        ) {
+                            Text(text = "OutGoing Call")
                         }
                     }
-
                 }
             }
         }
@@ -78,14 +98,9 @@ class MainActivity : ComponentActivity() {
         var permissions = arrayOf(
             Manifest.permission.MANAGE_OWN_CALLS,
             Manifest.permission.CALL_PHONE,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.VIBRATE,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.WRITE_CONTACTS,
-            Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.WRITE_CALL_LOG
-            )
+            Manifest.permission.READ_PHONE_NUMBERS,
+            Manifest.permission.READ_PHONE_STATE
+        )
         getNotificationPermission()?.let { permissions += it }
         requestPermissionsLauncher.launch(permissions)
     }
